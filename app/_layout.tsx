@@ -1,24 +1,19 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+import { AuthProvider } from '../src/context/AuthContext';
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <AuthProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Navegação principal por abas */}
+        <Stack.Screen name="(tabs)" />
+
+        {/* Rotas secundárias */}
+        <Stack.Screen name="form-adocao" options={{ headerShown: true, title: 'Solicitar Adoção' }} />
+        <Stack.Screen name="form-visita" options={{ headerShown: true, title: 'Agendar Visita' }} />
+        <Stack.Screen name="cad-user" options={{ headerShown: true, title: 'Cadastre-se' }} />
+        <Stack.Screen name="cad-admin" options={{ headerShown: true, title: 'Novo Admin' }} />
       </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    </AuthProvider>
   );
 }

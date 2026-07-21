@@ -11,7 +11,7 @@ import {
   ScrollView
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { getAuthStyles } from '../../styles/auth/authStyles';
 import { themes } from '../../theme/colors';
 
@@ -20,12 +20,14 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const { login: contextLogin, preferences } = useAuth();
+  // Extrai login, loginAsGuest e preferências do contexto
+  const { login: contextLogin, loginAsGuest, preferences } = useAuth();
   const theme = themes[(preferences?.theme || 'dark') as 'dark' | 'light'];
   const styles = getAuthStyles(theme);
 
   const insets = useSafeAreaInsets();
 
+  // Login tradicional por E-mail e Senha
   const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Atenção', 'Por favor, preencha todos os campos.');
@@ -36,10 +38,18 @@ export default function LoginScreen({ navigation }: any) {
     try {
       await contextLogin(email, password);
     } catch (error: any) {
-      // Exibe a mensagem retornada da API ou uma genérica
       Alert.alert('Erro ao entrar', error?.message || 'Não foi possível conectar ao servidor.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Entrada em modo visitante
+  const handleGuestLogin = async () => {
+    try {
+      await loginAsGuest();
+    } catch (error: any) {
+      Alert.alert('Erro', 'Não foi possível iniciar o modo visitante.');
     }
   };
 
@@ -76,6 +86,7 @@ export default function LoginScreen({ navigation }: any) {
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="next"
           />
 
           <TextInput
@@ -85,6 +96,8 @@ export default function LoginScreen({ navigation }: any) {
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
           />
 
           <TouchableOpacity
@@ -98,6 +111,20 @@ export default function LoginScreen({ navigation }: any) {
             ) : (
               <Text style={styles.buttonText}>Entrar</Text>
             )}
+          </TouchableOpacity>
+
+          {/* Botão de Visitante */}
+          <TouchableOpacity
+            style={{ marginTop: 20, alignItems: 'center' }}
+            onPress={handleGuestLogin}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: theme.textMuted, fontSize: 14 }}>
+              Apenas navegando?{' '}
+              <Text style={{ color: theme.primary, fontWeight: 'bold' }}>
+                Entrar sem login
+              </Text>
+            </Text>
           </TouchableOpacity>
 
           {navigation && (

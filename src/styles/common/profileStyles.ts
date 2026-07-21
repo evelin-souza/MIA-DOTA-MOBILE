@@ -61,4 +61,12 @@ export const getProfileStyles = (theme: ThemeColors) =>
       fontSize: 16,
       fontWeight: 'bold',
     },
+    OptionButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: 48,
+      backgroundColor: theme.surface,
+      borderRadius: 8,
+    }
   });

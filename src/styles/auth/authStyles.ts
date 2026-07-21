@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { ThemeColors } from '../../theme/colors';
+import { ThemeColors } from '../../../../theme/colors';
 
 export const getAuthStyles = (theme: ThemeColors) =>
   StyleSheet.create({

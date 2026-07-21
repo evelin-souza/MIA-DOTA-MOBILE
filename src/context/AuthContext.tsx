@@ -5,6 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  isGuest?: boolean; 
 }
 
 interface Preferences {
@@ -17,11 +18,11 @@ interface AuthContextData {
   isLoading: boolean;
   preferences: Preferences;
   login: (email: string, pass: string) => Promise<void>;
+  loginAsGuest: () => Promise<void>;
   logout: () => Promise<void>;
   toggleTheme: () => void;
 }
 
-// Chaves para salvar no celular
 const STORAGE_TOKEN_KEY = '@MiaDota:token';
 const STORAGE_USER_KEY = '@MiaDota:user';
 const STORAGE_PREFS_KEY = '@MiaDota:preferences';
@@ -34,7 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [preferences, setPreferences] = useState<Preferences>({ theme: 'dark' });
 
-  // Restaura os dados salvos no celular ao abrir o App
+  // Restaura os dados salvos no dispositivo ao abrir o App
   useEffect(() => {
     async function loadStorageData() {
       try {
@@ -44,9 +45,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           AsyncStorage.getItem(STORAGE_PREFS_KEY),
         ]);
 
-        if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+        // Restaura usuário (seja Visitante ou Logado)
+        if (storedUser) {
+          const parsedUser: User = JSON.parse(storedUser);
+          setUser(parsedUser);
+
+          // Se tiver token e não for visitante, restaura o token
+          if (storedToken && !parsedUser.isGuest) {
+            setToken(storedToken);
+          }
         }
 
         if (storedPrefs) {
@@ -62,41 +69,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStorageData();
   }, []);
 
-  // Função de Login que a LoginScreen chama
+  // Entrar como Visitante sem travar a UI
+  const loginAsGuest = async () => {
+    const guestUser: User = { 
+      id: 'guest', 
+      name: 'Visitante', 
+      email: '', 
+      isGuest: true 
+    };
+
+    try {
+      setToken(null);
+      setUser(guestUser); // Atualiza a tela imediatamente
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(guestUser));
+      await AsyncStorage.removeItem(STORAGE_TOKEN_KEY);
+    } catch (error) {
+      console.error('Erro ao salvar sessão de visitante:', error);
+    }
+  };
+
+  // Função de Login Tradicional
   const login = async (email: string, pass: string) => {
-    // Exemplo da estrutura:
     const response = {
       token: 'token-jwt-exemplo-123456',
       user: {
         id: '1',
         name: 'Jogador Dota',
         email: email,
+        isGuest: false,
       },
     };
 
-    // Atualiza os estados em memória
-    setToken(response.token);
-    setUser(response.user);
+    try {
+      setToken(response.token);
+      setUser(response.user);
 
-    // Persiste no armazenamento do celular
-    await AsyncStorage.setItem(STORAGE_TOKEN_KEY, response.token);
-    await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(response.user));
+      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, response.token);
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(response.user));
+    } catch (error) {
+      console.error('Erro ao salvar login:', error);
+      throw error;
+    }
   };
 
-  // Função para encerrar a sessão
+  // Encerra a sessão
   const logout = async () => {
-    setUser(null);
-    setToken(null);
-    await AsyncStorage.multiRemove([STORAGE_TOKEN_KEY, STORAGE_USER_KEY]);
+    try {
+      setUser(null);
+      setToken(null);
+      await AsyncStorage.multiRemove([STORAGE_TOKEN_KEY, STORAGE_USER_KEY]);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
   };
 
-  // Função para alternar entre Dark e Light mode
+  // Alterna tema Dark / Light
   const toggleTheme = async () => {
-    const newTheme: 'dark' | 'light' = preferences.theme === 'dark' ? 'light' : 'dark';
-    const newPrefs: Preferences = { ...preferences, theme: newTheme };
+    try {
+      const newTheme: 'dark' | 'light' = preferences.theme === 'dark' ? 'light' : 'dark';
+      const newPrefs: Preferences = { ...preferences, theme: newTheme };
 
-    setPreferences(newPrefs);
-    await AsyncStorage.setItem(STORAGE_PREFS_KEY, JSON.stringify(newPrefs));
+      setPreferences(newPrefs);
+      await AsyncStorage.setItem(STORAGE_PREFS_KEY, JSON.stringify(newPrefs));
+    } catch (error) {
+      console.error('Erro ao alternar tema:', error);
+    }
   };
 
   return (
@@ -107,6 +144,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoading,
         preferences,
         login,
+        loginAsGuest,
         logout,
         toggleTheme,
       }}
