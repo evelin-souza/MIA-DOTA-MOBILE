@@ -11,11 +11,12 @@ import {
   ScrollView
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router'; 
 import { useAuth } from '../../context/AuthContext';
 import { getAuthStyles } from '../../styles/auth/authStyles';
 import { themes } from '../../theme/colors';
 
-export default function LoginScreen({ navigation }: any) {
+export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -113,9 +114,23 @@ export default function LoginScreen({ navigation }: any) {
             )}
           </TouchableOpacity>
 
+          {/* 👈 2. Link de Cadastro com Expo Router (Sem a trava do navigation) */}
+          <TouchableOpacity
+            style={{ marginTop: 16, alignItems: 'center' }}
+            onPress={() => router.push('/cad-user')}
+            activeOpacity={0.7}
+          >
+            <Text style={{ color: theme.textMuted, fontSize: 14 }}>
+              Não tem uma conta?{' '}
+              <Text style={{ color: theme.primary, fontWeight: 'bold' }}>
+                Cadastre-se
+              </Text>
+            </Text>
+          </TouchableOpacity>
+
           {/* Botão de Visitante */}
           <TouchableOpacity
-            style={{ marginTop: 20, alignItems: 'center' }}
+            style={{ marginTop: 16, alignItems: 'center' }}
             onPress={handleGuestLogin}
             activeOpacity={0.7}
           >
@@ -126,17 +141,6 @@ export default function LoginScreen({ navigation }: any) {
               </Text>
             </Text>
           </TouchableOpacity>
-
-          {navigation && (
-            <TouchableOpacity
-              style={styles.registerLink}
-              onPress={() => navigation.navigate('Register')}
-            >
-              <Text style={styles.registerText}>
-                Não tem uma conta? <Text style={{ color: theme.primary, fontWeight: 'bold' }}>Cadastre-se</Text>
-              </Text>
-            </TouchableOpacity>
-          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -13,7 +13,7 @@ export default function FormVisitaScreen() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
 
-  const handleSchedule = () => {
+  const agendamento = () => {
     if (!date || !time) {
       Alert.alert('Atenção', 'Informe a data e o horário.');
       return;
@@ -44,7 +44,7 @@ export default function FormVisitaScreen() {
         onChangeText={setTime}
       />
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={handleSchedule}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={agendamento}>
         <Text style={styles.buttonText}>Confirmar Agendamento</Text>
       </TouchableOpacity>
     </View>

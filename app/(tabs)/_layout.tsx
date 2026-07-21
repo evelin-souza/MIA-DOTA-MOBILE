@@ -1,24 +1,47 @@
 import { Tabs } from 'expo-router';
 import { useAuth } from '../../src/context/AuthContext';
+import { themes } from '../../src/theme/colors';
 
-export default function TabsLayout() {
-  const { user } = useAuth();
+export default function TabLayout() {
+  const { user, preferences } = useAuth();
+  const theme = themes[(preferences?.theme || 'dark') as 'dark' | 'light'];
+
+  // Regras de Acesso
+  const isAdmin = user?.role === 'admin';
+  const isLoggedIn = Boolean(user && !user.isGuest); 
 
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
-      {/* Aba Vitrine */}
-      <Tabs.Screen name="index" options={{ title: 'Vitrine' }} />
-      
-      {/* Aba Visitas */}
-      <Tabs.Screen name="visitas" options={{ title: 'Visitas' }} />
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: theme.primary,
+        tabBarStyle: { backgroundColor: theme.surface },
+      }}
+    >
+      {/* Vitrine (Visível para todos: visitantes, usuários e admins) */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Vitrine',
+        }}
+      />
 
-      {/* Aba Admin (Pode ocultar se for visitante/usuário comum) */}
-      <Tabs.Screen 
+      {/* Visitas (Visível APENAS se estiver logado como Usuário ou Admin) */}
+      <Tabs.Screen
+        name="visitas"
+        options={{
+          title: 'Visitas',
+          href: isLoggedIn ? '/visitas' : null, 
+        }}
+      />
+
+      {/* Cadastrar Pet (Visível APENAS para Admin) */}
+      <Tabs.Screen
         name="admin" 
-        options={{ 
+        options={{
           title: 'Cadastrar Pet',
-          href: user?.isGuest ? null : '/admin' // Oculta a aba se for visitante
-        }} 
+          href: isAdmin ? '/admin' : null, 
+        }}
       />
     </Tabs>
   );

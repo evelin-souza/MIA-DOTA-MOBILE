@@ -1,12 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  isGuest?: boolean; 
-}
+import { apiFetch } from '../services/api';
+import { MOCK_ADMIN, MOCK_USER, User } from '../constants/mocks'; 
 
 interface Preferences {
   theme: 'dark' | 'light';
@@ -45,14 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           AsyncStorage.getItem(STORAGE_PREFS_KEY),
         ]);
 
-        // Restaura usuário (seja Visitante ou Logado)
         if (storedUser) {
           const parsedUser: User = JSON.parse(storedUser);
-          setUser(parsedUser);
 
-          // Se tiver token e não for visitante, restaura o token
+          // 💡 Só restaura se não for visitante e possuir token
           if (storedToken && !parsedUser.isGuest) {
+            setUser(parsedUser);
             setToken(storedToken);
+          } else {
+            await AsyncStorage.multiRemove([STORAGE_TOKEN_KEY, STORAGE_USER_KEY]);
           }
         }
 
@@ -69,45 +65,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStorageData();
   }, []);
 
-  // Entrar como Visitante sem travar a UI
+  // Entrar como Visitante apenas na sessão atual (não salva no AsyncStorage)
   const loginAsGuest = async () => {
     const guestUser: User = { 
       id: 'guest', 
       name: 'Visitante', 
       email: '', 
+      senha: '',
+      role: 'user',
       isGuest: true 
     };
 
     try {
       setToken(null);
-      setUser(guestUser); // Atualiza a tela imediatamente
-      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(guestUser));
-      await AsyncStorage.removeItem(STORAGE_TOKEN_KEY);
+      setUser(guestUser);
+      await AsyncStorage.multiRemove([STORAGE_TOKEN_KEY, STORAGE_USER_KEY]);
     } catch (error) {
-      console.error('Erro ao salvar sessão de visitante:', error);
+      console.error('Erro ao iniciar sessão de visitante:', error);
     }
   };
 
-  // Função de Login Tradicional
+  // Função de Login (Com suporte a Mocks e API Real)
   const login = async (email: string, pass: string) => {
-    const response = {
-      token: 'token-jwt-exemplo-123456',
-      user: {
-        id: '1',
-        name: 'Jogador Dota',
-        email: email,
-        isGuest: false,
-      },
-    };
+    const emailLower = email.trim().toLowerCase();
 
+    // MOCK DE ADMIN
+    if (emailLower === MOCK_ADMIN.email) {
+      setUser(MOCK_ADMIN);
+      setToken('mock-jwt-token-admin');
+      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, 'mock-jwt-token-admin');
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(MOCK_ADMIN));
+      return;
+    }
+
+    //  MOCK DE USUÁRIO COMUM
+    if (emailLower === MOCK_USER.email) {
+      setUser(MOCK_USER);
+      setToken('mock-jwt-token-user');
+      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, 'mock-jwt-token-user');
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(MOCK_USER));
+      return;
+    }
+
+    // LOGIN REAL NA API NESTJS
     try {
-      setToken(response.token);
-      setUser(response.user);
+      const response = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email: emailLower, password: pass }),
+      });
 
-      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, response.token);
-      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(response.user));
+      const userToken = response.access_token || response.token;
+      const userData: User = response.user || {
+        id: response.id || '1',
+        name: response.name || 'Usuário',
+        email: emailLower,
+        role: response.role || 'user',
+        isGuest: false,
+      };
+
+      setToken(userToken);
+      setUser(userData);
+
+      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, userToken);
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(userData));
     } catch (error) {
-      console.error('Erro ao salvar login:', error);
+      console.error('Erro ao realizar login no backend:', error);
       throw error;
     }
   };
