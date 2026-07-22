@@ -46,7 +46,7 @@ export const getAuthStyles = (theme: ThemeColors) =>
       marginBottom: 16,
     },
     logoText: {
-      color: '#ffffff',
+      color: theme.text,
       fontSize: 24,
       fontWeight: 'bold',
     },
@@ -79,7 +79,7 @@ export const getAuthStyles = (theme: ThemeColors) =>
       justifyContent: 'center',
     },
     buttonText: {
-      color: '#ffffff',
+      color: theme.text,
       fontSize: 16,
       fontWeight: 'bold',
     },

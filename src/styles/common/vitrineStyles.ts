@@ -14,13 +14,13 @@ export const getVitrineStyles = (theme: any) =>
       marginBottom: 16,
     },
     banner: {
-      backgroundColor: '#FFD700',
+      backgroundColor: theme.surface,
       padding: 10,
       borderRadius: 8,
       marginBottom: 16,
     },
     bannerText: {
-      color: '#000000',
+      color: theme.text,
       fontWeight: 'bold',
       textAlign: 'center',
     },
@@ -66,7 +66,7 @@ export const getVitrineStyles = (theme: any) =>
       alignItems: 'center',
     },
     btnText: {
-      color: '#ffffff',
+      color: theme.textmuted,
       fontWeight: 'bold',
     },
     btnOutlineText: {
