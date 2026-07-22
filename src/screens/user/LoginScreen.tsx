@@ -8,7 +8,8 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Image
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router'; 
@@ -68,7 +69,11 @@ export default function LoginScreen() {
       >
         <View style={styles.logoContainer}>
           <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>MIA</Text>
+            <Image
+              source={require('../../assets/images/icon.png')}
+              style={{ width: '75%', height: '75%' }}
+              resizeMode="contain"
+            />
           </View>
         </View>
 
@@ -114,7 +119,7 @@ export default function LoginScreen() {
             )}
           </TouchableOpacity>
 
-          {/* 👈 2. Link de Cadastro com Expo Router (Sem a trava do navigation) */}
+          {/* Link de Cadastro */}
           <TouchableOpacity
             style={{ marginTop: 16, alignItems: 'center' }}
             onPress={() => router.push('/cad-user')}
