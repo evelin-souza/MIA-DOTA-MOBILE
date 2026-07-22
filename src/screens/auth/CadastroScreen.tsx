@@ -16,7 +16,6 @@ export default function CadastroScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 🔍 Expressão Regular (Regex) para validar e-mail com @ e .
   const validateEmail = (emailToTest: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(emailToTest);
