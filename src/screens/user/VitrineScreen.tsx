@@ -4,7 +4,9 @@ import { router, Href } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { themes } from '../../theme/colors';
 import { getVitrineStyles } from '../../styles/common/vitrineStyles';
-import { API_URL } from '../../services/api'; // 👈 Importa a URL da sua API NestJS
+import { apiFetch } from '../../services/api';
+import { MOCK_ANIMALS } from '../../constants/mocks'; 
+
 
 export default function VitrineScreen() {
   const { user, preferences, logout } = useAuth();
@@ -15,30 +17,37 @@ export default function VitrineScreen() {
   // Estados para os pets e controle de carregamento
   const [pets, setPets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Função para buscar os animais cadastrados na API NestJS
+  // Função para buscar os animais na API NestJS ou carregar os Mocks em caso de falha
   const fetchPets = async () => {
     try {
-      setLoading(true);
-      const response = await fetch(`${API_URL}/animals`);
-      
-      if (!response.ok) {
-        throw new Error('Falha ao obter lista de animais.');
-      }
+      const data = await apiFetch('/animals');
 
-      const data = await response.json();
-      setPets(data);
+      if (data && Array.isArray(data) && data.length > 0) {
+        setPets(data);
+      } else {
+        // Se a API retornar vazia, carrega o mock
+        setPets(MOCK_ANIMALS);
+      }
     } catch (error: any) {
-      console.error('Erro ao buscar animais:', error);
-      Alert.alert('Erro de Conexão ⚠️', 'Não foi possível carregar os animais do servidor.');
+      console.log('Backend offline ou erro de conexão. Usando animais simulados.');
+      // Fallback para a lista de mocks
+      setPets(MOCK_ANIMALS);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchPets();
   }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchPets();
+  };
 
   const handleAction = (route: Href) => {
     if (user?.isGuest) {
@@ -91,16 +100,20 @@ export default function VitrineScreen() {
         <FlatList
           data={pets}
           keyExtractor={(item) => String(item.id)}
-          onRefresh={fetchPets}
-          refreshing={loading}
+          onRefresh={handleRefresh}
+          refreshing={refreshing}
           renderItem={({ item }) => (
             <View style={styles.card}>
               <Image 
-                source={{ uri: item.photoUrl || item.photo_url || 'https://via.placeholder.com/500' }} 
+                source={{ 
+                  uri: item.photoUrl || item.photo_url || item.imageUrl || 'https://via.placeholder.com/500' 
+                }} 
                 style={styles.image} 
               />
               <Text style={styles.petName}>{item.name}</Text>
-              <Text style={styles.petDetails}>{item.species} • {item.age}</Text>
+              <Text style={styles.petDetails}>
+                {item.breed || item.species} • {item.age}
+              </Text>
 
               <View style={styles.row}>
                 <TouchableOpacity
